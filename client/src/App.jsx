@@ -13,6 +13,8 @@ const STEPS = [
   { id: 'education', title: 'Education', icon: <GraduationCap size={20} /> },
   { id: 'experience', title: 'Experience', icon: <Briefcase size={20} /> },
   { id: 'skills', title: 'Skills', icon: <Wrench size={20} /> },
+  { id: 'certificates', title: 'Certificates', icon: <Award size={20} /> },
+  { id: 'referees', title: 'Referees', icon: <Users size={20} /> },
   { id: 'review', title: 'Review', icon: <FileText size={20} /> },
 ];
 
@@ -33,12 +35,53 @@ function App() {
     education: [{ school: '', degree: '', year: '', location: '' }],
     experience: [{ company: '', position: '', duration: '', tasks: '' }],
     skills: '',
-    certificates: '',
-    referees: '',
+    certificates: [{ name: '', institution: '', date: '' }],
+    referees: [{ name: '', role: '', phone: '', email: '' }],
     attributes: ''
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+
+  // Load from localStorage on mount
+  React.useEffect(() => {
+    const savedData = localStorage.getItem('cvFormData');
+    if (savedData) {
+      try {
+        setFormData(JSON.parse(savedData));
+      } catch (e) {
+        console.error('Failed to load saved data', e);
+      }
+    }
+  }, []);
+
+  // Save to localStorage on change
+  React.useEffect(() => {
+    localStorage.setItem('cvFormData', JSON.stringify(formData));
+  }, [formData]);
+
+  const resetData = () => {
+    if (window.confirm('Are you sure you want to clear all data?')) {
+      setFormData({
+        personalInfo: {
+          fullName: '',
+          jobTitle: '',
+          email: '',
+          phone: '',
+          address: '',
+          linkedin: ''
+        },
+        summary: '',
+        education: [{ school: '', degree: '', year: '', location: '' }],
+        experience: [{ company: '', position: '', duration: '', tasks: '' }],
+        skills: '',
+        certificates: [{ name: '', institution: '', date: '' }],
+        referees: [{ name: '', role: '', phone: '', email: '' }],
+        attributes: ''
+      });
+      localStorage.removeItem('cvFormData');
+    }
+  };
 
   const handleInputChange = (section, field, value, index = null) => {
     if (index !== null) {
@@ -56,9 +99,11 @@ function App() {
   };
 
   const addItem = (section) => {
-    const newItem = section === 'education'
-      ? { school: '', degree: '', year: '', location: '' }
-      : { company: '', position: '', duration: '', tasks: '' };
+    let newItem = {};
+    if (section === 'education') newItem = { school: '', degree: '', year: '', location: '' };
+    else if (section === 'experience') newItem = { company: '', position: '', duration: '', tasks: '' };
+    else if (section === 'certificates') newItem = { name: '', institution: '', date: '' };
+    else if (section === 'referees') newItem = { name: '', role: '', phone: '', email: '' };
     setFormData({ ...formData, [section]: [...formData[section], newItem] });
   };
 
@@ -128,8 +173,38 @@ function App() {
           >
             <div className="section-title"><Upload /> Step 1: Upload Template</div>
             <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              Upload a .docx file with tags like {'{fullName}'}, {'{summary}'}, {'{#experience}'}{'{company}'}{'{/experience}'}, etc.
+              Upload a .docx file with tags like {'{fullName}'}, {'{summary}'}, etc.
+              <button
+                className="btn btn-secondary"
+                style={{ marginLeft: '1rem', padding: '0.5rem 1rem', fontSize: '0.8rem' }}
+                onClick={() => setShowHelp(!showHelp)}
+              >
+                View Tag Guide
+              </button>
             </p>
+
+            {showHelp && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="glass-card"
+                style={{ marginBottom: '2rem', fontSize: '0.9rem', padding: '1.5rem' }}
+              >
+                <h4 style={{ marginBottom: '1rem' }}>Template Tag Guide</h4>
+                <ul style={{ textAlign: 'left', listStyle: 'none', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <li><code>{'{fullName}'}</code>: Your name</li>
+                  <li><code>{'{jobTitle}'}</code>: Target role</li>
+                  <li><code>{'{email}'}</code>, <code>{'{phone}'}</code></li>
+                  <li><code>{'{summary}'}</code>: Executive summary</li>
+                  <li><code>{'{skills}'}</code>, <code>{'{attributes}'}</code></li>
+                  <li><code>{'{#experience}'}...{'{/experience}'}</code></li>
+                  <li><code>{'  {company}'}</code>, <code>{'{position}'}</code></li>
+                  <li><code>{'{#education}'}...{'{/education}'}</code></li>
+                  <li><code>{'  {school}'}</code>, <code>{'{degree}'}</code></li>
+                </ul>
+              </motion.div>
+            )}
+
             <label className="file-upload">
               <Upload size={48} style={{ color: 'var(--primary)', marginBottom: '1rem' }} />
               <h3>{template ? template.name : 'Click or Drag to Upload Template'}</h3>
@@ -307,11 +382,11 @@ function App() {
             animate={{ opacity: 1, x: 0 }}
             className="form-section"
           >
-            <div className="section-title"><Tool /> Skills & Others</div>
+            <div className="section-title"><Wrench /> Skills & Attributes</div>
             <div className="input-group">
               <label>Technical Skills</label>
               <textarea
-                rows="3"
+                rows="4"
                 value={formData.skills}
                 onChange={(e) => handleInputChange('skills', null, e.target.value)}
                 placeholder="React, Node.js, Python, AWS..."
@@ -320,67 +395,126 @@ function App() {
             <div className="input-group">
               <label>Personal Attributes</label>
               <textarea
-                rows="2"
+                rows="4"
                 value={formData.attributes}
                 onChange={(e) => handleInputChange('attributes', null, e.target.value)}
                 placeholder="Team player, resilient, problem solver..."
               />
-            </div>
-            <div className="input-row">
-              <div className="input-group">
-                <label>Certificates</label>
-                <textarea
-                  rows="3"
-                  value={formData.certificates}
-                  onChange={(e) => handleInputChange('certificates', null, e.target.value)}
-                />
-              </div>
-              <div className="input-group">
-                <label>Referees</label>
-                <textarea
-                  rows="3"
-                  value={formData.referees}
-                  onChange={(e) => handleInputChange('referees', null, e.target.value)}
-                />
-              </div>
             </div>
           </motion.div>
         );
       case 5:
         return (
           <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="form-section"
+          >
+            <div className="section-title"><Award /> Certificates</div>
+            <div className="input-group">
+              <label>Professional Certifications</label>
+              <textarea
+                rows="10"
+                value={formData.certificates}
+                onChange={(e) => handleInputChange('certificates', null, e.target.value)}
+                placeholder="List your certifications, one per line..."
+              />
+            </div>
+          </motion.div>
+        );
+      case 6:
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="form-section"
+          >
+            <div className="section-title"><Users /> Referees</div>
+            <div className="input-group">
+              <label>Professional Referees</label>
+              <textarea
+                rows="10"
+                value={formData.referees}
+                onChange={(e) => handleInputChange('referees', null, e.target.value)}
+                placeholder="Name, Position, Company, Contact Info..."
+              />
+            </div>
+          </motion.div>
+        );
+      case 7:
+        return (
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="form-section"
-            style={{ textAlign: 'center' }}
           >
             <div className="section-title" style={{ justifyContent: 'center' }}>
-              <FileText /> Review & Download
+              <FileText /> Review Your CV
             </div>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
-              Everything looks good! Choose your preferred format and generate your professional CV.
-            </p>
-            <div className="input-row" style={{ justifyContent: 'center', gap: '2rem', marginBottom: '2rem' }}>
+
+            <div className="preview-summary" style={{ textAlign: 'left', background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '16px', marginBottom: '2rem', maxHeight: '400px', overflowY: 'auto' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>Personal Details</h4>
+                <p><strong>Name:</strong> {formData.personalInfo?.fullName || 'Not provided'}</p>
+                <p><strong>Job Title:</strong> {formData.personalInfo?.jobTitle || 'Not provided'}</p>
+              </div>
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>Professional Summary</h4>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  {formData.summary ? (formData.summary.length > 200 ? formData.summary.substring(0, 200) + '...' : formData.summary) : 'No summary provided.'}
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <h4 style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>Education</h4>
+                  <p style={{ fontSize: '0.85rem' }}>{formData.education?.length || 0} items</p>
+                </div>
+                <div>
+                  <h4 style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>Experience</h4>
+                  <p style={{ fontSize: '0.85rem' }}>{formData.experience?.length || 0} items</p>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '1.5rem' }}>
+                <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>Additional Info</h4>
+                <p style={{ fontSize: '0.85rem' }}>Certificates: {formData.certificates ? '✅ Provided' : 'None'}</p>
+                <p style={{ fontSize: '0.85rem' }}>Referees: {formData.referees ? '✅ Provided' : 'None'}</p>
+              </div>
+
+              <hr style={{ margin: '1.5rem 0', opacity: 0.1 }} />
+
+              <h4 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>Template Selection</h4>
+              <p style={{ fontSize: '0.9rem' }}>
+                {template ? `✅ ${template.name}` : '⚠️ Please upload a template in Step 1'}
+              </p>
+            </div>
+
+            <div className="input-row" style={{ justifyContent: 'center', gap: '1.5rem', marginBottom: '2rem' }}>
               <button
                 className={`btn ${format === 'docx' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ flex: 1 }}
                 onClick={() => setFormat('docx')}
               >
-                Word Document (.docx)
+                Word (.docx)
               </button>
               <button
                 className={`btn ${format === 'pdf' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ flex: 1 }}
                 onClick={() => setFormat('pdf')}
               >
-                PDF Document (.pdf)
+                PDF (.pdf)
               </button>
             </div>
+
             <button
               className="btn btn-primary"
-              style={{ padding: '1.5rem 4rem', fontSize: '1.2rem', margin: '0 auto' }}
+              style={{ width: '100%', padding: '1.5rem', fontSize: '1.2rem' }}
               onClick={handleSubmit}
-              disabled={isGenerating}
+              disabled={isGenerating || !template}
             >
-              {isGenerating ? 'Generating...' : <><Download /> Generate My CV</>}
+              {isGenerating ? 'Generating...' : <><Download /> Download CV Now</>}
             </button>
           </motion.div>
         );
@@ -402,6 +536,14 @@ function App() {
             key={step.id}
             className={`step ${index === currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
             title={step.title}
+            onClick={() => {
+              if (index === 0 || template) {
+                setCurrentStep(index);
+              } else {
+                alert('Please upload a template first!');
+              }
+            }}
+            style={{ cursor: 'pointer' }}
           >
             {step.icon}
           </div>
@@ -414,14 +556,22 @@ function App() {
         </AnimatePresence>
 
         <div className="input-row" style={{ marginTop: '3rem', borderTop: '1px solid var(--glass-border)', paddingTop: '2rem' }}>
-          {currentStep > 0 && (
+          {currentStep > 0 ? (
             <button className="btn btn-secondary" onClick={() => setCurrentStep(prev => prev - 1)}>
               <ChevronLeft /> Previous
             </button>
+          ) : (
+            <button className="btn btn-secondary" style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }} onClick={resetData}>
+              <Trash2 size={18} /> Clear All Data
+            </button>
           )}
           <div style={{ flex: 1 }}></div>
-          {currentStep < 5 && currentStep > 0 && (
-            <button className="btn btn-primary" onClick={() => setCurrentStep(prev => prev + 1)}>
+          {currentStep < 7 && (
+            <button
+              className="btn btn-primary"
+              onClick={() => setCurrentStep(prev => prev + 1)}
+              disabled={currentStep === 0 && !template}
+            >
               Next Step <ChevronRight />
             </button>
           )}
