@@ -35,7 +35,7 @@ function App() {
     education: [{ school: '', degree: '', year: '', location: '' }],
     experience: [{ company: '', position: '', duration: '', tasks: '' }],
     skills: '',
-    certificates: [{ name: '', institution: '', date: '' }],
+    certificates: [{ name: '', organization: '', date: '' }],
     referees: [{ name: '', role: '', phone: '', email: '' }],
     attributes: ''
   });
@@ -75,7 +75,7 @@ function App() {
         education: [{ school: '', degree: '', year: '', location: '' }],
         experience: [{ company: '', position: '', duration: '', tasks: '' }],
         skills: '',
-        certificates: [{ name: '', institution: '', date: '' }],
+        certificates: [{ name: '', organization: '', date: '' }],
         referees: [{ name: '', role: '', phone: '', email: '' }],
         attributes: ''
       });
@@ -99,11 +99,12 @@ function App() {
   };
 
   const addItem = (section) => {
-    let newItem = {};
+    let newItem;
     if (section === 'education') newItem = { school: '', degree: '', year: '', location: '' };
     else if (section === 'experience') newItem = { company: '', position: '', duration: '', tasks: '' };
-    else if (section === 'certificates') newItem = { name: '', institution: '', date: '' };
+    else if (section === 'certificates') newItem = { name: '', organization: '', date: '' };
     else if (section === 'referees') newItem = { name: '', role: '', phone: '', email: '' };
+
     setFormData({ ...formData, [section]: [...formData[section], newItem] });
   };
 
@@ -196,11 +197,10 @@ function App() {
                   <li><code>{'{jobTitle}'}</code>: Target role</li>
                   <li><code>{'{email}'}</code>, <code>{'{phone}'}</code></li>
                   <li><code>{'{summary}'}</code>: Executive summary</li>
-                  <li><code>{'{skills}'}</code>, <code>{'{attributes}'}</code></li>
                   <li><code>{'{#experience}'}...{'{/experience}'}</code></li>
-                  <li><code>{'  {company}'}</code>, <code>{'{position}'}</code></li>
                   <li><code>{'{#education}'}...{'{/education}'}</code></li>
-                  <li><code>{'  {school}'}</code>, <code>{'{degree}'}</code></li>
+                  <li><code>{'{#certificates}'}...{'{/certificates}'}</code></li>
+                  <li><code>{'{#referees}'}...{'{/referees}'}</code></li>
                 </ul>
               </motion.div>
             )}
@@ -307,9 +307,10 @@ function App() {
                   <div className="input-group">
                     <label>Year</label>
                     <input
-                      type="text"
+                      type="number"
                       value={edu.year}
                       onChange={(e) => handleInputChange('education', 'year', e.target.value, index)}
+                      placeholder="e.g. 2023"
                     />
                   </div>
                   <div className="input-group">
@@ -411,15 +412,45 @@ function App() {
             className="form-section"
           >
             <div className="section-title"><Award /> Certificates</div>
-            <div className="input-group">
-              <label>Professional Certifications</label>
-              <textarea
-                rows="10"
-                value={formData.certificates}
-                onChange={(e) => handleInputChange('certificates', null, e.target.value)}
-                placeholder="List your certifications, one per line..."
-              />
-            </div>
+            {formData.certificates.map((cert, index) => (
+              <div key={index} className="repeater-item">
+                {formData.certificates.length > 1 && (
+                  <Trash2 className="remove-btn" size={20} onClick={() => removeItem('certificates', index)} />
+                )}
+                <div className="input-group">
+                  <label>Certificate Name</label>
+                  <input
+                    type="text"
+                    value={cert.name}
+                    onChange={(e) => handleInputChange('certificates', 'name', e.target.value, index)}
+                    placeholder="e.g. Certified Project Manager"
+                  />
+                </div>
+                <div className="input-row" style={{ marginTop: '1rem' }}>
+                  <div className="input-group">
+                    <label>Institution / Organization</label>
+                    <input
+                      type="text"
+                      value={cert.organization}
+                      onChange={(e) => handleInputChange('certificates', 'organization', e.target.value, index)}
+                      placeholder="e.g. PMI"
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Date</label>
+                    <input
+                      type="text"
+                      value={cert.date}
+                      onChange={(e) => handleInputChange('certificates', 'date', e.target.value, index)}
+                      placeholder="e.g. 2023"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button className="btn btn-secondary" onClick={() => addItem('certificates')}>
+              <Plus size={18} /> Add Certificate
+            </button>
           </motion.div>
         );
       case 6:
@@ -430,15 +461,56 @@ function App() {
             className="form-section"
           >
             <div className="section-title"><Users /> Referees</div>
-            <div className="input-group">
-              <label>Professional Referees</label>
-              <textarea
-                rows="10"
-                value={formData.referees}
-                onChange={(e) => handleInputChange('referees', null, e.target.value)}
-                placeholder="Name, Position, Company, Contact Info..."
-              />
-            </div>
+            {formData.referees.map((ref, index) => (
+              <div key={index} className="repeater-item">
+                {formData.referees.length > 1 && (
+                  <Trash2 className="remove-btn" size={20} onClick={() => removeItem('referees', index)} />
+                )}
+                <div className="input-row">
+                  <div className="input-group">
+                    <label>Referee Name</label>
+                    <input
+                      type="text"
+                      value={ref.name}
+                      onChange={(e) => handleInputChange('referees', 'name', e.target.value, index)}
+                      placeholder="Full Name"
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Job Role</label>
+                    <input
+                      type="text"
+                      value={ref.role}
+                      onChange={(e) => handleInputChange('referees', 'role', e.target.value, index)}
+                      placeholder="e.g. Manager"
+                    />
+                  </div>
+                </div>
+                <div className="input-row" style={{ marginTop: '1rem' }}>
+                  <div className="input-group">
+                    <label>Phone Number</label>
+                    <input
+                      type="text"
+                      value={ref.phone}
+                      onChange={(e) => handleInputChange('referees', 'phone', e.target.value, index)}
+                      placeholder="+265..."
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Email (Optional)</label>
+                    <input
+                      type="email"
+                      value={ref.email}
+                      onChange={(e) => handleInputChange('referees', 'email', e.target.value, index)}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button className="btn btn-secondary" onClick={() => addItem('referees')}>
+              <Plus size={18} /> Add Referee
+            </button>
           </motion.div>
         );
       case 7:
@@ -468,26 +540,22 @@ function App() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <h4 style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>Education</h4>
-                  <p style={{ fontSize: '0.85rem' }}>{formData.education?.length || 0} items</p>
+                  <h4 style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>Core Data</h4>
+                  <p style={{ fontSize: '0.85rem' }}>Edu: {formData.education?.length || 0} entries</p>
+                  <p style={{ fontSize: '0.85rem' }}>Exp: {formData.experience?.length || 0} entries</p>
                 </div>
                 <div>
-                  <h4 style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>Experience</h4>
-                  <p style={{ fontSize: '0.85rem' }}>{formData.experience?.length || 0} items</p>
+                  <h4 style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>References & Certs</h4>
+                  <p style={{ fontSize: '0.85rem' }}>Certs: {formData.certificates?.length || 0} entries</p>
+                  <p style={{ fontSize: '0.85rem' }}>Refs: {formData.referees?.length || 0} entries</p>
                 </div>
-              </div>
-
-              <div style={{ marginTop: '1.5rem' }}>
-                <h4 style={{ color: 'var(--primary)', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>Additional Info</h4>
-                <p style={{ fontSize: '0.85rem' }}>Certificates: {formData.certificates ? '✅ Provided' : 'None'}</p>
-                <p style={{ fontSize: '0.85rem' }}>Referees: {formData.referees ? '✅ Provided' : 'None'}</p>
               </div>
 
               <hr style={{ margin: '1.5rem 0', opacity: 0.1 }} />
 
-              <h4 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>Template Selection</h4>
+              <h4 style={{ color: 'var(--primary)', marginBottom: '0.5rem' }}>Template</h4>
               <p style={{ fontSize: '0.9rem' }}>
-                {template ? `✅ ${template.name}` : '⚠️ Please upload a template in Step 1'}
+                {template ? `✅ ${template.name}` : '⚠️ No template uploaded'}
               </p>
             </div>
 
